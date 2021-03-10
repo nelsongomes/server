@@ -17,7 +17,7 @@
   "dependencies": {
     "express": "^4.17.1",
     "swagger-ui-express": "^4.1.6",
-    "ts-openapi": "^0.2.3",
+    "ts-openapi": "^0.2.10",
     "typescript": "^4.1.3"
   },
   "devDependencies": {
