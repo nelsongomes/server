@@ -1,6 +1,5 @@
 import { Application, Request, Response } from "express";
-import { OpenApi, Types } from "ts-openapi";
-import { bodySchema } from "ts-openapi";
+import { OpenApi, Types, bodySchema } from "ts-openapi";
 import { errorSchema, CustomerType } from "./common";
 
 function create(request: Request, response: Response) {

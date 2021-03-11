@@ -1,6 +1,5 @@
-import { Application, Request, response, Response } from "express";
-import { OpenApi, Types } from "ts-openapi";
-import { bodySchema } from "ts-openapi";
+import { Application, Request, Response } from "express";
+import { OpenApi, Types, bodySchema } from "ts-openapi";
 import { CustomerType, errorSchema, responseSchema } from "./common";
 
 function listCustomers(request: Request, response: Response) {
