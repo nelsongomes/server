@@ -31,6 +31,8 @@ export function initOpenApi(app: Application, openApi: OpenApi) {
 
   // we'll create an endpoint to reply with openapi schema
   app.get("/openapi.json", function (_req, res) {
+    res.setHeader("Cache-Control", "no-store, must-revalidate");
+    res.setHeader("Expires", "0");
     res.json(openApiJson);
   });
   // this will make openapi UI available with our definition

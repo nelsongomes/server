@@ -1,21 +1,6 @@
-import { Application, Request, response, Response } from "express";
-import { OpenApi, Types, bodySchema } from "ts-openapi";
-import { CustomerType, errorSchema } from "./common";
-
-// body response schema
-const responseSchema = {
-  id: Types.Uuid({ description: "Customer ID" }),
-  name: Types.String({
-    description: "Customer name",
-    maxLength: 100,
-    required: true,
-  }),
-  type: Types.StringEnum({
-    values: Object.values(CustomerType),
-    description: "Customer Type",
-  }),
-  birthdate: Types.Date({ description: "Birthdate" }),
-};
+import { Application, Request, Response } from "express";
+import { OpenApi, Types } from "ts-openapi";
+import { customerSchema, CustomerType, errorSchema } from "./common";
 
 function getCustomer(_request: Request, response: Response) {
   response.send({
@@ -49,13 +34,8 @@ export function initGetCustomer(app: Application, openApi: OpenApi) {
         },
         tags: ["Customer Operations"],
         responses: {
-          200: bodySchema(
-            Types.Object({
-              description: "Successful Operation",
-              properties: responseSchema,
-            })
-          ),
-          400: errorSchema("Bad Request"),
+          200: openApi.declareSchema("Successful Operation", customerSchema),
+          400: openApi.declareSchema("Bad Request", errorSchema),
         },
       },
     },

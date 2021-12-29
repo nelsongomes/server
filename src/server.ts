@@ -4,6 +4,7 @@ import { initGetCustomer } from "./get-customer";
 import { initHello } from "./hello";
 import { initListCustomers } from "./list-customer";
 import { initOpenApi, openApiInstance } from "./openapi";
+import { errorMiddleware } from "./middlewares/error";
 
 const PORT = 8000;
 
@@ -21,6 +22,8 @@ initPostCustomer(app, openApiInstance);
 
 // initializes schema endpoint and UI
 initOpenApi(app, openApiInstance);
+
+app.use(errorMiddleware);
 
 app.listen(PORT, function () {
   console.log(`Server is listening on port ${PORT}!`);

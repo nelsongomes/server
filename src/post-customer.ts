@@ -1,6 +1,7 @@
 import { Application, Request, Response } from "express";
-import { OpenApi, Types, bodySchema } from "ts-openapi";
-import { errorSchema, CustomerType } from "./common";
+import { OpenApi, Types, WebRequestSchema } from "ts-openapi";
+import { CustomerType, errorSchema } from "./common";
+import { validationMiddleware } from "./middlewares/validation";
 
 function create(request: Request, response: Response) {
   if (!request.headers.authorization) {
@@ -21,8 +22,6 @@ export function initPostCustomer(app: Application, openApi: OpenApi) {
 }
 
 function initCreate(app: Application, openApi: OpenApi) {
-  app.post("/customer", create);
-
   const commonProperties = {
     name: Types.String({
       description: "Customer name",
@@ -36,6 +35,40 @@ function initCreate(app: Application, openApi: OpenApi) {
     birthdate: Types.Date({ description: "Birthdate" }),
   };
 
+  const successResponse = openApi.declareSchema(
+    "Successful Customer Creation",
+    Types.Object({
+      description: "Created",
+      properties: {
+        id: Types.Uuid({ description: "Customer ID" }),
+        ...commonProperties,
+      },
+      example: {
+        id: "b710e129-4e2c-4448-b605-73b18d297bae",
+        name: "Customer Name",
+        type: CustomerType.Platinum,
+        birthdate: "2020-12-30",
+      },
+    })
+  );
+
+  const error400 = openApi.declareSchema("Bad Request", errorSchema);
+  const error401 = openApi.declareSchema("Unauthorized", errorSchema);
+
+  const requestSchema: WebRequestSchema = {
+    headers: {
+      requestid: Types.Uuid({
+        description: "Request ID",
+        required: false,
+        example: "b710e129-4e2c-4448-b605-73b18d297bae",
+      }),
+    },
+    body: Types.Object({
+      description: "Customer data to create",
+      properties: commonProperties,
+    }),
+  };
+
   openApi.addPath(
     "/customer",
     {
@@ -43,41 +76,17 @@ function initCreate(app: Application, openApi: OpenApi) {
         summary: "Create customer",
         description: "This operation creates a new customer",
         operationId: "post-customer-op",
-        requestSchema: {
-          headers: {
-            requestId: Types.Uuid({
-              description: "Request ID",
-              required: false,
-              example: "b710e129-4e2c-4448-b605-73b18d297bae",
-            }),
-          },
-          body: Types.Object({
-            description: "Customer data to create",
-            properties: commonProperties,
-          }),
-        },
+        requestSchema,
         tags: ["Customer Operations"],
         responses: {
-          201: bodySchema(
-            Types.Object({
-              description: "Created",
-              properties: {
-                id: Types.Uuid({ description: "Customer ID" }),
-                ...commonProperties,
-              },
-              example: {
-                id: "b710e129-4e2c-4448-b605-73b18d297bae",
-                name: "Customer Name",
-                type: CustomerType.Platinum,
-                birthdate: "2020-12-30",
-              },
-            })
-          ),
-          400: errorSchema("Bad Request"),
-          401: errorSchema("Unauthorized"),
+          201: successResponse,
+          400: error400,
+          401: error401,
         },
       },
     },
     true
   );
+
+  app.post("/customer", [validationMiddleware(requestSchema), create]);
 }
