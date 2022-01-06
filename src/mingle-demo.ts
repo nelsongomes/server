@@ -1,7 +1,12 @@
-import express, { Application, Request, Response } from "express";
+import express, { Application } from "express";
 import swaggerUi from "swagger-ui-express";
 
-import { OpenApiMingle, OpenApiSchema, ServiceList } from "ts-openapi";
+import {
+  oauth2AuthorizationCodeAuth,
+  OpenApiMingle,
+  OpenApiSchema,
+  ServiceList,
+} from "ts-openapi";
 
 const PORT = 8888;
 const REFRESH_SECONDS = 60;
@@ -12,17 +17,22 @@ const OPENAPIJSON = `${API_PATH}/openapi.json`;
 async function getServices(): Promise<ServiceList> {
   return {
     users: {
-      schemaUrl:
-        "file://../ts-openapi/test/unit/openapi-mingle/samples/sample1.json",
+      schemaUrl: "http://127.0.0.1:2000/private/openapi.json",
       publicPrefix: "/users/",
       privatePrefix: "/public/",
-      type: "consul",
+      type: "static",
     },
-    demo: {
-      schemaUrl: "https://generator3.swagger.io/openapi.json",
-      publicPrefix: "/openapi/",
+    products: {
+      schemaUrl: "http://127.0.0.1:3000/openapi.json",
+      publicPrefix: "/products/",
       privatePrefix: "/",
-      type: "consul",
+      type: "static",
+    },
+    emails: {
+      schemaUrl: "http://127.0.0.1:4000/api-schema.json",
+      publicPrefix: "/emails/",
+      privatePrefix: "/api/",
+      type: "static",
     },
   };
 }
@@ -53,6 +63,21 @@ async function getMingledApi(): Promise<OpenApiSchema> {
     { url: "https://explorer-eu.awesome-api.com" },
     { url: "https://explorer-us.awesome-api.com" },
   ]);
+  serviceMingle.declareSecurityScheme(
+    "oauth2Security",
+    oauth2AuthorizationCodeAuth(
+      "This API uses OAuth 2 with the authorizationCode grant flow. [More info](https://api.example.com/docs/auth)",
+      "https://api.example.com/oauth2/authorize",
+      "https://api.example.com/oauth2/tokenUrl",
+      {
+        // scopes
+        read_pets: "Read your pets",
+        write_pets: "Modify pets in your account",
+      },
+      "https://www.domain.com/refreshUrl"
+    )
+  );
+  serviceMingle.addGlobalSecurityScheme("oauth2Security");
 
   await serviceMingle.combineServices(await getServices());
 
@@ -92,6 +117,7 @@ async function init() {
     } catch (e) {
       // log any errors during service mingle attempt plus failed attempts should
       // not crash server because we keep state from latest attempt
+      console.log(e);
     }
   }, REFRESH_SECONDS * 1000);
 
